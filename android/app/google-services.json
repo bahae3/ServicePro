@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1036333131363",
+    "project_id": "servicepro-b78da",
+    "storage_bucket": "servicepro-b78da.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1036333131363:android:f5d9d38c8b5f2347ff7a56",
+        "android_client_info": {
+          "package_name": "com.bahae.service_pro"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBoo8Ey80HlL4hdr9hMXwCU1HZwx1A-2iE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

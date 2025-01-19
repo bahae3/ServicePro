@@ -16,10 +16,20 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  final TextEditingController _nameController = TextEditingController();
+  String firstName = '';
+  String lastName = '';
+  String phoneNumber = '';
+  String email = '';
+  String password = '';
+  bool isLoading = true;
+
+  final TextEditingController _firstNameController = TextEditingController();
+  final TextEditingController _lastNameController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+
+  bool _isPasswordVisible = false;
 
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -27,44 +37,79 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   void initState() {
     super.initState();
-    // Optionally, load user data from Firebase
-    loadUserData();
+    fetchUserData();
   }
 
-  void loadUserData() async {
-    User? user = _auth.currentUser;
-    if (user != null) {
-      DocumentSnapshot snapshot =
-          await _firestore.collection('users').doc(user.uid).get();
-      if (snapshot.exists) {
-        setState(() {
-          _nameController.text = snapshot['fullName'] ?? '';
-          _phoneController.text = snapshot['phoneNumber'] ?? '';
-          _emailController.text = user.email ?? '';
-        });
+  Future<void> fetchUserData() async {
+    try {
+      final userId = _auth.currentUser?.uid;
+
+      if (userId != null) {
+        DocumentSnapshot userDoc =
+            await _firestore.collection('users').doc(userId).get();
+
+        if (userDoc.exists) {
+          setState(() {
+            firstName = userDoc['first_name'] ?? '';
+            lastName = userDoc['last_name'] ?? '';
+            phoneNumber = userDoc['phone_number'] ?? '';
+            email = userDoc['email'];
+            password = userDoc['password'];
+
+            _firstNameController.text = firstName;
+            _lastNameController.text = lastName;
+            _phoneController.text = phoneNumber;
+            _emailController.text = email;
+            _passwordController.text = password;
+
+            isLoading = false;
+          });
+        } else {
+          throw Exception('User data not found');
+        }
+      } else {
+        throw Exception('User not logged in');
       }
-    }
-  }
-
-  void saveChanges() async {
-    User? user = _auth.currentUser;
-    if (user != null) {
-      await _firestore.collection('users').doc(user.uid).set({
-        'fullName': _nameController.text,
-        'phoneNumber': _phoneController.text,
-        'email': _emailController.text,
+    } catch (e) {
+      setState(() {
+        isLoading = false;
       });
-
-      if (_passwordController.text.isNotEmpty) {
-        await user.updatePassword(_passwordController.text);
-      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error fetching user data: $e')),
+      );
     }
   }
 
-  // my part (bahae)
+  Future<void> saveChanges() async {
+    try {
+      User? user = _auth.currentUser;
+      if (user != null) {
+        // Update password if entered
+        if (_passwordController.text.isNotEmpty) {
+          await user.updatePassword(_passwordController.text);
+        }
+
+        await _firestore.collection('users').doc(user.uid).update({
+          'first_name': _firstNameController.text,
+          'last_name': _lastNameController.text,
+          'phone_number': _phoneController.text,
+          'password': _passwordController.text
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Profile updated successfully!')),
+        );
+      }
+    } catch (e) {
+      print('$e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error saving changes: $e')),
+      );
+    }
+  }
+
   int _selectedIndex = 0;
 
-  // Function to handle item taps
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
@@ -116,87 +161,202 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
           ],
         ),
-        body: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            children: [
-              // Profile Picture Placeholder
-              CircleAvatar(
-                radius: 40,
-                child: Icon(Icons.person, size: 50),
-              ),
-              SizedBox(height: 20),
-              // Full Name Field
-              TextField(
-                controller: _nameController,
-                decoration: InputDecoration(
-                  labelText: 'Full Name',
-                  suffixIcon: Icon(Icons.edit),
+        body: isLoading
+            ? Center(child: CircularProgressIndicator())
+            : Padding(
+                padding: EdgeInsets.all(16.0),
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Center(
+                        child: CircleAvatar(
+                          radius: 40,
+                          child: Icon(Icons.person, size: 50),
+                        ),
+                      ),
+                      SizedBox(height: 20),
+
+                      // First Name Field
+                      Text(
+                        'First name:',
+                        style: TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      Padding(
+                        padding:
+                            EdgeInsets.symmetric(horizontal: 6, vertical: 10),
+                        child: TextField(
+                          controller: _firstNameController,
+                          onChanged: (value) {
+                            firstName = value;
+                          },
+                          keyboardType: TextInputType.text,
+                          decoration: InputDecoration(
+                            border: OutlineInputBorder(),
+                          ),
+                        ),
+                      ),
+
+                      SizedBox(height: 10),
+
+                      // Last Name Field
+                      Text(
+                        'Last name:',
+                        style: TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      Padding(
+                        padding:
+                            EdgeInsets.symmetric(horizontal: 6, vertical: 10),
+                        child: TextField(
+                          controller: _lastNameController,
+                          onChanged: (value) {
+                            lastName = value;
+                          },
+                          keyboardType: TextInputType.text,
+                          decoration: InputDecoration(
+                            border: OutlineInputBorder(),
+                            hintText: lastName,
+                          ),
+                        ),
+                      ),
+
+                      SizedBox(height: 10),
+
+                      // Phone Number Field
+                      Text(
+                        'Phone Number:',
+                        style: TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      Padding(
+                        padding:
+                            EdgeInsets.symmetric(horizontal: 6, vertical: 10),
+                        child: TextField(
+                          controller: _phoneController,
+                          onChanged: (value) {
+                            lastName = value;
+                          },
+                          keyboardType: TextInputType.number,
+                          decoration: InputDecoration(
+                            border: OutlineInputBorder(),
+                            hintText: phoneNumber,
+                          ),
+                        ),
+                      ),
+
+                      SizedBox(height: 10),
+
+                      // Email Field
+                      Text(
+                        'Email: (can\'t be updated)',
+                        style: TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      Padding(
+                        padding:
+                            EdgeInsets.symmetric(horizontal: 6, vertical: 10),
+                        child: TextField(
+                          controller: _emailController,
+                          readOnly: true,
+                          keyboardType: TextInputType.emailAddress,
+                          decoration: InputDecoration(
+                            border: OutlineInputBorder(),
+                          ),
+                        ),
+                      ),
+
+                      SizedBox(height: 10),
+
+                      // Password Field
+                      Text(
+                        'Password:',
+                        style: TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      Padding(
+                        padding:
+                            EdgeInsets.symmetric(horizontal: 6, vertical: 10),
+                        child: TextField(
+                          controller: _passwordController,
+                          obscureText: !_isPasswordVisible,
+                          onChanged: (value) {
+                            password = value;
+                          },
+                          keyboardType: TextInputType.visiblePassword,
+                          decoration: InputDecoration(
+                            border: OutlineInputBorder(),
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                // Change the icon based on whether the password is visible
+                                _isPasswordVisible
+                                    ? Icons.visibility
+                                    : Icons.visibility_off,
+                              ),
+                              onPressed: () {
+                                // Toggle the password visibility state
+                                setState(() {
+                                  _isPasswordVisible = !_isPasswordVisible;
+                                });
+                              },
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      SizedBox(height: 20),
+
+                      Center(
+                        child: ElevatedButton(
+                          onPressed: saveChanges,
+                          child: Text('Save Changes'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.black,
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(5),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-              SizedBox(height: 10),
-              // Phone Number Field
-              TextField(
-                controller: _phoneController,
-                decoration: InputDecoration(
-                  labelText: 'Phone Number',
-                  suffixIcon: Icon(Icons.edit),
-                ),
-              ),
-              SizedBox(height: 10),
-              // Email Field
-              TextField(
-                controller: _emailController,
-                readOnly: true, // Email should be non-editable
-                decoration: InputDecoration(
-                  labelText: 'Email Address',
-                  suffixIcon: Icon(Icons.edit),
-                ),
-              ),
-              SizedBox(height: 10),
-              // Password Field
-              TextField(
-                controller: _passwordController,
-                decoration: InputDecoration(
-                  labelText: 'Password',
-                  suffixIcon: Icon(Icons.visibility),
-                ),
-                obscureText: true,
-              ),
-              SizedBox(height: 20),
-              // Save Changes Button
-              ElevatedButton(
-                onPressed: saveChanges,
-                child: Text('Save Changes'),
-              ),
-            ],
-          ),
-        ),
         bottomNavigationBar: BottomNavigationBar(
           currentIndex: _selectedIndex,
           onTap: _onItemTapped,
           items: [
             BottomNavigationBarItem(
               icon: Icon(Icons.person),
-              label: '',
+              label: 'Profile',
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.search),
-              label: '',
+              label: 'Services',
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.notifications),
-              label: '',
+              label: 'Notifications',
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.mail),
-              label: '',
+              label: 'Messages',
             ),
           ],
           selectedItemColor: Colors.black,
           unselectedItemColor: Colors.grey,
-          showSelectedLabels: false,
-          showUnselectedLabels: false,
           type: BottomNavigationBarType.fixed,
         ),
       ),

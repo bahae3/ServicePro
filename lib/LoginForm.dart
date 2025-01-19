@@ -1,5 +1,6 @@
 // ignore_for_file: prefer_const_constructors
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:service_pro/SignupForm.dart';
@@ -15,12 +16,38 @@ class LoginForm extends StatefulWidget {
 class _LoginFormState extends State<LoginForm> {
   String email = '';
   String password = '';
+
+  bool _isPasswordVisible = false;
+
+  Future<void> _login() async {
+    try {
+      UserCredential userCredential =
+          await FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+
+      // After successful login, retrieve user data from Firestore
+      DocumentSnapshot userData = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userCredential.user?.uid)
+          .get();
+
+      // Continue to navigate to the next page
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => ServicesPage()),
+      );
+    } on FirebaseAuthException catch (e) {
+      // Handle login error
+      print('Login failed: ${e.message}');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
-      onWillPop: () async {
-        return false;
-      },
+      onWillPop: () async => false,
       child: SafeArea(
         child: Scaffold(
           appBar: AppBar(
@@ -39,33 +66,23 @@ class _LoginFormState extends State<LoginForm> {
           body: SingleChildScrollView(
             child: Column(
               children: <Widget>[
-                SizedBox(
-                  height: 20,
-                ),
+                SizedBox(height: 20),
                 Image.asset(
                   'images/servicepro_logo.png',
                   height: 170,
                   width: 170,
                 ),
-                SizedBox(
-                  height: 20,
-                ),
+                SizedBox(height: 20),
                 Padding(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 45,
-                    vertical: 20,
-                  ),
+                  padding: EdgeInsets.symmetric(horizontal: 45, vertical: 20),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
-                      // Email
-                      Text(
-                        'Email:',
-                        style: TextStyle(
-                          fontSize: 17,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
+                      Text('Email:',
+                          style: TextStyle(
+                            fontSize: 17,
+                            fontWeight: FontWeight.w500,
+                          )),
                       Padding(
                         padding:
                             EdgeInsets.symmetric(horizontal: 6, vertical: 10),
@@ -80,12 +97,7 @@ class _LoginFormState extends State<LoginForm> {
                           ),
                         ),
                       ),
-
-                      SizedBox(
-                        height: 8,
-                      ),
-
-                      // Password
+                      SizedBox(height: 8),
                       Text(
                         'Password:',
                         style: TextStyle(
@@ -101,17 +113,28 @@ class _LoginFormState extends State<LoginForm> {
                             password = value;
                           },
                           keyboardType: TextInputType.visiblePassword,
-                          obscureText: true,
+                          obscureText: !_isPasswordVisible,
                           decoration: InputDecoration(
                             border: OutlineInputBorder(),
                             hintText: 'Enter your password',
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                // Change the icon based on whether the password is visible
+                                _isPasswordVisible
+                                    ? Icons.visibility
+                                    : Icons.visibility_off,
+                              ),
+                              onPressed: () {
+                                // Toggle the password visibility state
+                                setState(() {
+                                  _isPasswordVisible = !_isPasswordVisible;
+                                });
+                              },
+                            ),
                           ),
                         ),
                       ),
-
-                      SizedBox(
-                        height: 14,
-                      ),
+                      SizedBox(height: 14),
                       SizedBox(
                         width: double.infinity,
                         height: 45,
@@ -123,43 +146,14 @@ class _LoginFormState extends State<LoginForm> {
                               borderRadius: BorderRadius.circular(5),
                             ),
                           ),
-                          onPressed: () async {
-                            try {
-                              // Log in the user
-                              final userCredential = await FirebaseAuth.instance
-                                  .signInWithEmailAndPassword(
-                                email: email.trim(),
-                                password: password.trim(),
-                              );
-
-                              // Navigate to AuthSuccess if login is successful
-                              if (userCredential.user != null) {
-                                Navigator.pushReplacement(
-                                  context,
-                                  MaterialPageRoute(
-                                      builder: (context) => ServicesPage()),
-                                );
-                              }
-                            } catch (e) {
-                              // Show error message if login fails
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text('Login failed: $e'),
-                                ),
-                              );
-                            }
-                          },
+                          onPressed: _login,
                           child: Text(
                             'Log In',
-                            style: TextStyle(
-                              fontSize: 17,
-                            ),
+                            style: TextStyle(fontSize: 17),
                           ),
                         ),
                       ),
-                      SizedBox(
-                        height: 3,
-                      ),
+                      SizedBox(height: 3),
                       Center(
                         child: TextButton(
                           onPressed: () {

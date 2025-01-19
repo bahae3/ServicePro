@@ -209,25 +209,23 @@ class _ServicesPageState extends State<ServicesPage> {
             items: [
               BottomNavigationBarItem(
                 icon: Icon(Icons.person),
-                label: '',
+                label: 'Profile',
               ),
               BottomNavigationBarItem(
                 icon: Icon(Icons.search),
-                label: '',
+                label: 'Services',
               ),
               BottomNavigationBarItem(
                 icon: Icon(Icons.notifications),
-                label: '',
+                label: 'Notifications',
               ),
               BottomNavigationBarItem(
                 icon: Icon(Icons.mail),
-                label: '',
+                label: 'Messages',
               ),
             ],
             selectedItemColor: Colors.black,
             unselectedItemColor: Colors.grey,
-            showSelectedLabels: false,
-            showUnselectedLabels: false,
             type: BottomNavigationBarType.fixed,
           ),
         ),

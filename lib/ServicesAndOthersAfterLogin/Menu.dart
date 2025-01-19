@@ -4,7 +4,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:service_pro/LoginForm.dart';
 import 'package:service_pro/ServicesAndOthersAfterLogin/Profile.dart';
+import 'package:service_pro/ServicesAndOthersAfterLogin/Services.dart';
 import 'Contact_us.dart';
+import 'package:service_pro/BecomeProvider/providerSignUp.dart';
 
 class MenuScreen extends StatelessWidget {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -34,6 +36,18 @@ class MenuScreen extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: Colors.lime,
         title: Text('Menu'),
+        leading: IconButton(
+          onPressed: () {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => ServicesPage()),
+            );
+          },
+          icon: Icon(
+            Icons.arrow_back,
+            color: Colors.black,
+          ),
+        ),
       ),
       body: ListView(
         children: [
@@ -87,7 +101,12 @@ class MenuScreen extends StatelessWidget {
               leading: Icon(Icons.work),
               title: Text('Become a Worker'),
               onTap: () {
-                // Navigate to worker registration screen
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => WorkerForm(),
+                  ),
+                );
               },
             ),
           ),

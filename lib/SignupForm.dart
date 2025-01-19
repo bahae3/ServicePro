@@ -20,6 +20,59 @@ class _SignupFormState extends State<SignupForm> {
   String password = '';
   String phoneNumber = '';
 
+  bool _isPasswordVisible = false;
+
+  final _auth = FirebaseAuth.instance;
+
+  Future<void> _signUp() async {
+    try {
+      // Create user with Firebase Authentication
+      UserCredential userCredential =
+          await _auth.createUserWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+
+      // After successful signup, add user data to Firestore
+      CollectionReference collRef =
+          FirebaseFirestore.instance.collection('users');
+      collRef.doc(userCredential.user?.uid).set({
+        'first_name': firstName,
+        'last_name': lastName,
+        'email': email,
+        'phone_number': phoneNumber,
+        'password': password,
+        'is_provider': false,
+        'is_admin': false,
+        'id_job': 0
+      });
+
+      // Navigate to the next screen (e.g., Services or Home)
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => ServicesPage()),
+      );
+    } on FirebaseAuthException catch (e) {
+      // Show error message if any
+      String errorMessage = e.message ?? 'An error occurred';
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text('Signup Failed'),
+          content: Text(errorMessage),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text('OK'),
+            ),
+          ],
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
@@ -152,10 +205,24 @@ class _SignupFormState extends State<SignupForm> {
                         password = value;
                       },
                       keyboardType: TextInputType.visiblePassword,
-                      obscureText: true,
+                      obscureText: !_isPasswordVisible,
                       decoration: InputDecoration(
                         border: OutlineInputBorder(),
                         hintText: 'Enter your password',
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            // Change the icon based on whether the password is visible
+                            _isPasswordVisible
+                                ? Icons.visibility
+                                : Icons.visibility_off,
+                          ),
+                          onPressed: () {
+                            // Toggle the password visibility state
+                            setState(() {
+                              _isPasswordVisible = !_isPasswordVisible;
+                            });
+                          },
+                        ),
                       ),
                     ),
                   ),
@@ -201,69 +268,7 @@ class _SignupFormState extends State<SignupForm> {
                           borderRadius: BorderRadius.circular(5),
                         ),
                       ),
-                      onPressed: () async {
-                        final FirebaseAuth auth = FirebaseAuth.instance;
-                        try {
-                          if (firstName.isEmpty ||
-                              lastName.isEmpty ||
-                              email.isEmpty ||
-                              password.isEmpty ||
-                              phoneNumber.isEmpty) {
-                            showDialog(
-                              context: context,
-                              builder: (context) => AlertDialog(
-                                title: Text('Missing Information'),
-                                content: Text('Please fill in all fields.'),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () => Navigator.pop(context),
-                                    child: Text('OK'),
-                                  ),
-                                ],
-                              ),
-                            );
-                            return;
-                          }
-
-                          final newUser =
-                              await auth.createUserWithEmailAndPassword(
-                                  email: email, password: password);
-
-                          if (newUser.user != null) {
-                            print("Navigating to AuthSuccess...");
-                            Navigator.pushReplacement(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) => ServicesPage()),
-                            );
-
-                            await FirebaseFirestore.instance
-                                .collection('users')
-                                .doc(newUser.user?.uid)
-                                .set({
-                              'firstName': firstName,
-                              'lastName': lastName,
-                              'phoneNumber': phoneNumber,
-                              'email': email,
-                              'createdAt': FieldValue.serverTimestamp(),
-                            });
-                          }
-                        } catch (e) {
-                          showDialog(
-                            context: context,
-                            builder: (context) => AlertDialog(
-                              title: Text('Sign Up Failed'),
-                              content: Text(e.toString()),
-                              actions: [
-                                TextButton(
-                                  onPressed: () => Navigator.pop(context),
-                                  child: Text('OK'),
-                                ),
-                              ],
-                            ),
-                          );
-                        }
-                      },
+                      onPressed: _signUp,
                       child: Text(
                         'Sign Up',
                         style: TextStyle(

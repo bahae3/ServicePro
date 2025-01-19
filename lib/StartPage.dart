@@ -1,26 +1,14 @@
-// ignore_for_file: prefer_const_constructors
-
 import 'package:flutter/material.dart';
 import 'Joinus.dart';
 
-class Startpage extends StatelessWidget {
+class Startpage extends StatefulWidget {
+  const Startpage({super.key});
+
   @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      home: OnboardingScreen(),
-      routes: {
-        '/becomeWorker': (context) => Joinus(),
-      },
-    );
-  }
+  _StartpageState createState() => _StartpageState();
 }
 
-class OnboardingScreen extends StatefulWidget {
-  @override
-  State<OnboardingScreen> createState() => _OnboardingScreenState();
-}
-
-class _OnboardingScreenState extends State<OnboardingScreen> {
+class _StartpageState extends State<Startpage> {
   int currentScreen = 0;
 
   @override
@@ -37,13 +25,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   : 'images/quote_photo.png',
               height: 200,
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
             Text(
               currentScreen == 0 ? 'Choose a service' : 'Get a quote',
-              style: TextStyle(fontSize: 25, fontWeight: FontWeight.bold),
+              style: const TextStyle(fontSize: 25, fontWeight: FontWeight.bold),
               textAlign: TextAlign.center,
             ),
-            SizedBox(height: 11),
+            const SizedBox(height: 11),
             Text(
               currentScreen == 0
                   ? 'Find the right service for your needs easily, with a variety of options available at your fingertips.'
@@ -51,7 +39,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               style: TextStyle(fontSize: 17, color: Colors.grey.shade600),
               textAlign: TextAlign.center,
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -60,7 +48,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   backgroundColor:
                       currentScreen == 0 ? Colors.black : Colors.grey,
                 ),
-                SizedBox(width: 8),
+                const SizedBox(width: 8),
                 CircleAvatar(
                   radius: 4,
                   backgroundColor:
@@ -68,15 +56,18 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 ),
               ],
             ),
-            SizedBox(height: 40),
+            const SizedBox(height: 40),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 TextButton(
                   onPressed: () {
-                    Navigator.pushReplacementNamed(context, '/becomeWorker');
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const Joinus()),
+                    );
                   },
-                  child: Text(
+                  child: const Text(
                     'Skip',
                     style: TextStyle(
                       color: Colors.black,
@@ -90,7 +81,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   ),
                   onPressed: () {
                     if (currentScreen == 1) {
-                      Navigator.pushReplacementNamed(context, '/becomeWorker');
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(builder: (context) => const Joinus()),
+                      );
                     } else {
                       setState(() {
                         currentScreen++;

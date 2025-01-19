@@ -5,6 +5,8 @@ import 'package:service_pro/LoginForm.dart';
 import 'SignupForm.dart';
 
 class Joinus extends StatelessWidget {
+  const Joinus({super.key});
+
   @override
   Widget build(BuildContext context) {
     return SafeArea(
@@ -181,7 +183,7 @@ class Joinus extends StatelessWidget {
                     ),
                     TextButton(
                       onPressed: () {
-                        Navigator.push(
+                        Navigator.pushReplacement(
                           context,
                           MaterialPageRoute(builder: (context) => LoginForm()),
                         );

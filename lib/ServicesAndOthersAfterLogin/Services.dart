@@ -1,11 +1,13 @@
 // ignore_for_file: prefer_const_constructors
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'Messages.dart';
 import 'Profile.dart';
 import 'Menu.dart';
 import 'Notification.dart';
+import 'package:service_pro/providers_category.dart';
 
 class ServicesPage extends StatefulWidget {
   const ServicesPage({super.key});
@@ -16,13 +18,13 @@ class ServicesPage extends StatefulWidget {
 
 class _ServicesPageState extends State<ServicesPage> {
   final _auth = FirebaseAuth.instance;
-
   User? loggedInUser;
 
   @override
   void initState() {
     super.initState();
     getCurrentUser();
+    fetchJobs(); // Fetch jobs when the page is loaded
   }
 
   void getCurrentUser() async {
@@ -38,17 +40,37 @@ class _ServicesPageState extends State<ServicesPage> {
     }
   }
 
-  final List<Map<String, String>> services = [
-    {'title': 'Cleaning', 'icon': 'images/cleaning_icon.png'},
-    {'title': 'Repairing', 'icon': 'images/repairing_icon.png'},
-    {'title': 'Electrician', 'icon': 'images/electrician_icon.png'},
-    {'title': 'Carpenter', 'icon': 'images/carpenter_icon.png'},
-    {'title': 'Repairing', 'icon': 'images/repairing_icon.png'},
-    {'title': 'Electrician', 'icon': 'images/electrician_icon.png'},
-    {'title': 'Carpenter', 'icon': 'images/carpenter_icon.png'},
-    {'title': 'Repairing', 'icon': 'images/repairing_icon.png'},
-    {'title': 'More', 'icon': 'images/more_icon.png'},
-  ];
+  List<Map<String, String>> services = [];
+
+  // Fetch jobs from Firebase Firestore
+  Future<void> fetchJobs() async {
+    try {
+      // Get the jobs collection
+      QuerySnapshot querySnapshot =
+          await FirebaseFirestore.instance.collection('jobs').get();
+
+      // Loop through the documents and build the services list
+      List<Map<String, String>> fetchedServices = [];
+      for (var doc in querySnapshot.docs) {
+        String jobName = doc['job_name'];
+
+        // Map the job_name to the corresponding icon (e.g., 'job_name.png')
+        String iconPath =
+            'images/${jobName.toLowerCase().replaceAll(' ', '_')}_icon.png';
+
+        fetchedServices.add({
+          'title': jobName,
+          'icon': iconPath,
+        });
+      }
+
+      setState(() {
+        services = fetchedServices; // Update the list with fetched data
+      });
+    } catch (e) {
+      print('Error fetching jobs: $e');
+    }
+  }
 
   int _selectedIndex = 1;
 
@@ -119,24 +141,6 @@ class _ServicesPageState extends State<ServicesPage> {
           ),
           body: Column(
             children: [
-              // Search Bar
-              Container(
-                padding: EdgeInsets.all(16),
-                color: Colors.lime,
-                child: TextField(
-                  decoration: InputDecoration(
-                    hintText: 'The service I’m looking for is...',
-                    prefixIcon: Icon(Icons.search),
-                    filled: true,
-                    fillColor: Colors.white,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide.none,
-                    ),
-                  ),
-                ),
-              ),
-
               // Services Section
               Expanded(
                 child: Container(
@@ -146,7 +150,7 @@ class _ServicesPageState extends State<ServicesPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Services',
+                        'Services:',
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -154,48 +158,66 @@ class _ServicesPageState extends State<ServicesPage> {
                       ),
                       SizedBox(height: 16),
                       Expanded(
-                        child: GridView.builder(
-                          gridDelegate:
-                              SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 3,
-                            crossAxisSpacing: 16,
-                            mainAxisSpacing: 16,
-                          ),
-                          itemCount: services.length,
-                          itemBuilder: (context, index) {
-                            return Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Container(
-                                  height: 65,
-                                  width: 65,
-                                  decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    borderRadius: BorderRadius.circular(8),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.black12,
-                                        blurRadius: 4,
-                                      ),
-                                    ],
-                                  ),
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(8),
-                                    child: Image.asset(
-                                      services[index]['icon']!,
-                                      fit: BoxFit.cover,
+                        child: services.isEmpty
+                            ? Center(child: CircularProgressIndicator())
+                            : GridView.builder(
+                                gridDelegate:
+                                    SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: 3,
+                                  crossAxisSpacing: 16,
+                                  mainAxisSpacing: 16,
+                                ),
+                                itemCount: services.length,
+                                itemBuilder: (context, index) {
+                                  return GestureDetector(
+                                    onTap: () {
+                                      // Perform the desired action when an item is clicked
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => ProvidersPage(
+                                            categoryName: services[index]
+                                                ['title']!,
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                    child: Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Container(
+                                          height: 65,
+                                          width: 65,
+                                          decoration: BoxDecoration(
+                                            color: Colors.white,
+                                            borderRadius:
+                                                BorderRadius.circular(8),
+                                            boxShadow: [
+                                              BoxShadow(
+                                                color: Colors.black12,
+                                                blurRadius: 4,
+                                              ),
+                                            ],
+                                          ),
+                                          child: Padding(
+                                            padding: const EdgeInsets.all(8),
+                                            child: Image.asset(
+                                              services[index]['icon']!,
+                                              fit: BoxFit.cover,
+                                            ),
+                                          ),
+                                        ),
+                                        SizedBox(height: 8),
+                                        Text(
+                                          services[index]['title']!,
+                                          style: TextStyle(fontSize: 14),
+                                        ),
+                                      ],
                                     ),
-                                  ),
-                                ),
-                                SizedBox(height: 8),
-                                Text(
-                                  services[index]['title']!,
-                                  style: TextStyle(fontSize: 14),
-                                ),
-                              ],
-                            );
-                          },
-                        ),
+                                  );
+                                },
+                              ),
                       ),
                     ],
                   ),

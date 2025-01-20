@@ -16,32 +16,74 @@ class LoginForm extends StatefulWidget {
 class _LoginFormState extends State<LoginForm> {
   String email = '';
   String password = '';
-
   bool _isPasswordVisible = false;
+  bool _isLoading = false;
 
   Future<void> _login() async {
+    if (email.isEmpty || password.isEmpty) {
+      _showErrorDialog('Email and password cannot be empty.');
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+    });
+
     try {
+      // Sign in with email and password
       UserCredential userCredential =
           await FirebaseAuth.instance.signInWithEmailAndPassword(
         email: email,
         password: password,
       );
 
-      // After successful login, retrieve user data from Firestore
+      // Retrieve user data from Firestore
       DocumentSnapshot userData = await FirebaseFirestore.instance
           .collection('users')
           .doc(userCredential.user?.uid)
           .get();
 
-      // Continue to navigate to the next page
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => ServicesPage()),
-      );
+      setState(() {
+        _isLoading = false;
+      });
+
+      if (userData.exists) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => ServicesPage()),
+        );
+      } else {
+        _showErrorDialog('User data not found in Firestore.');
+      }
     } on FirebaseAuthException catch (e) {
-      // Handle login error
-      print('Login failed: ${e.message}');
+      setState(() {
+        _isLoading = false;
+      });
+      _showErrorDialog('Login failed: ${e.message}');
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+      });
+      _showErrorDialog('An unexpected error occurred. Please try again.');
     }
+  }
+
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Error'),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+            child: Text('OK'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -78,11 +120,13 @@ class _LoginFormState extends State<LoginForm> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
-                      Text('Email:',
-                          style: TextStyle(
-                            fontSize: 17,
-                            fontWeight: FontWeight.w500,
-                          )),
+                      Text(
+                        'Email:',
+                        style: TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
                       Padding(
                         padding:
                             EdgeInsets.symmetric(horizontal: 6, vertical: 10),
@@ -119,13 +163,11 @@ class _LoginFormState extends State<LoginForm> {
                             hintText: 'Enter your password',
                             suffixIcon: IconButton(
                               icon: Icon(
-                                // Change the icon based on whether the password is visible
                                 _isPasswordVisible
                                     ? Icons.visibility
                                     : Icons.visibility_off,
                               ),
                               onPressed: () {
-                                // Toggle the password visibility state
                                 setState(() {
                                   _isPasswordVisible = !_isPasswordVisible;
                                 });
@@ -135,24 +177,26 @@ class _LoginFormState extends State<LoginForm> {
                         ),
                       ),
                       SizedBox(height: 14),
-                      SizedBox(
-                        width: double.infinity,
-                        height: 45,
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.black,
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(5),
+                      _isLoading
+                          ? Center(child: CircularProgressIndicator())
+                          : SizedBox(
+                              width: double.infinity,
+                              height: 45,
+                              child: ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.black,
+                                  foregroundColor: Colors.white,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(5),
+                                  ),
+                                ),
+                                onPressed: _login,
+                                child: Text(
+                                  'Log In',
+                                  style: TextStyle(fontSize: 17),
+                                ),
+                              ),
                             ),
-                          ),
-                          onPressed: _login,
-                          child: Text(
-                            'Log In',
-                            style: TextStyle(fontSize: 17),
-                          ),
-                        ),
-                      ),
                       SizedBox(height: 3),
                       Center(
                         child: TextButton(

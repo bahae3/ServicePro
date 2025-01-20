@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:service_pro/BecomeProvider/providerSignUp.dart';
 
 class Subscription extends StatefulWidget {
+  const Subscription({super.key});
+
   @override
   _SubscriptionState createState() => _SubscriptionState();
 }

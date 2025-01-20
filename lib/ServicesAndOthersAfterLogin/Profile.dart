@@ -169,12 +169,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      // profile picture
                       Center(
-                        child: CircleAvatar(
-                          radius: 40,
-                          child: Icon(Icons.person, size: 50),
+                        child: ClipOval(
+                          child: Icon(
+                            Icons.person,
+                            size: 85,
+                          ),
                         ),
                       ),
+
                       SizedBox(height: 20),
 
                       // First Name Field
@@ -320,7 +324,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       Center(
                         child: ElevatedButton(
                           onPressed: saveChanges,
-                          child: Text('Save Changes'),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.black,
                             foregroundColor: Colors.white,
@@ -328,6 +331,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               borderRadius: BorderRadius.circular(5),
                             ),
                           ),
+                          child: Text('Save Changes'),
                         ),
                       ),
                     ],

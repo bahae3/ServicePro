@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:service_pro/LoginForm.dart';
 import 'package:service_pro/ServicesAndOthersAfterLogin/Profile.dart';
 import 'package:service_pro/ServicesAndOthersAfterLogin/Services.dart';
-import 'Contact_us.dart';
+import 'contact_us.dart';
 import 'package:service_pro/BecomeProvider/providerSignUp.dart';
 
 class MenuScreen extends StatelessWidget {
@@ -84,7 +84,7 @@ class MenuScreen extends StatelessWidget {
                 Navigator.pushReplacement(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => ContactUsScreen(),
+                    builder: (context) => ContactUsPage(),
                   ),
                 );
               },

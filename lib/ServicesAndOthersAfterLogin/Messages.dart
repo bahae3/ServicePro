@@ -1,5 +1,6 @@
 // ignore_for_file: prefer_const_constructors
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'Services.dart';
 import 'Profile.dart';
@@ -43,6 +44,60 @@ class _MessagesState extends State<Messages> {
     }
   }
 
+  // firebase manipulation
+  Future<List<Map<String, dynamic>>> getMessagesWithUserInfo(
+      String senderId) async {
+    List<Map<String, dynamic>> result = [];
+
+    try {
+      // Step 1: Query the messages collection where id_sender == senderId
+      QuerySnapshot messagesSnapshot = await FirebaseFirestore.instance
+          .collection('messages')
+          .where('id_sender', isEqualTo: senderId)
+          .get();
+
+      print(messagesSnapshot.docs);
+
+      for (var messageDoc in messagesSnapshot.docs) {
+        Map<String, dynamic> messageData =
+            messageDoc.data() as Map<String, dynamic>;
+
+        // Step 2: Fetch the user information for each id_sender
+        DocumentSnapshot userDoc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(messageData['id_sender'])
+            .get();
+
+        if (userDoc.exists) {
+          Map<String, dynamic> userData =
+              userDoc.data() as Map<String, dynamic>;
+
+          // Step 3: Combine the message and user data
+          result.add({
+            'message': messageData,
+            'user': userData,
+          });
+        }
+      }
+    } catch (e) {
+      print('Error fetching data: $e');
+    }
+
+    print('result d fetching 1: $result');
+    return result;
+  }
+
+  void fetchData() async {
+    String senderId = '1';
+    List<Map<String, dynamic>> messagesWithUserInfo =
+        await getMessagesWithUserInfo(senderId);
+
+    for (var item in messagesWithUserInfo) {
+      print('Message: ${item['message']['content']}');
+      print('Sender: ${item['user']['name']}');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
@@ -70,6 +125,7 @@ class _MessagesState extends State<Messages> {
         body: ListView(
           padding: const EdgeInsets.all(16),
           children: [
+            ElevatedButton(onPressed: fetchData, child: Text('Hello')),
             _buildMessageTile(
                 sender: 'Elon',
                 message:

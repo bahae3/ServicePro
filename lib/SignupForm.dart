@@ -13,6 +13,12 @@ class SignupForm extends StatefulWidget {
   State<SignupForm> createState() => _SignupFormState();
 }
 
+extension StringExtension on String {
+  String capitalize() {
+    return "${this[0].toUpperCase()}${substring(1).toLowerCase()}";
+  }
+}
+
 class _SignupFormState extends State<SignupForm> {
   String firstName = '';
   String lastName = '';
@@ -37,14 +43,14 @@ class _SignupFormState extends State<SignupForm> {
       CollectionReference collRef =
           FirebaseFirestore.instance.collection('users');
       collRef.doc(userCredential.user?.uid).set({
-        'first_name': firstName,
-        'last_name': lastName,
+        'first_name': firstName.capitalize(),
+        'last_name': lastName.capitalize(),
         'email': email,
         'phone_number': phoneNumber,
         'password': password,
         'is_provider': false,
         'is_admin': false,
-        'id_job': 0
+        'job_name': ''
       });
 
       // Navigate to the next screen (e.g., Services or Home)

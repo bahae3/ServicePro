@@ -6,6 +6,9 @@ import 'package:flutter/material.dart';
 import 'package:service_pro/SignupForm.dart';
 import 'package:service_pro/ServicesAndOthersAfterLogin/Services.dart';
 
+// provider interface
+import 'ProviderInterface/ProfileProvider.dart';
+
 class LoginForm extends StatefulWidget {
   const LoginForm({super.key});
 
@@ -48,10 +51,18 @@ class _LoginFormState extends State<LoginForm> {
       });
 
       if (userData.exists) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => ServicesPage()),
-        );
+        if (userData['is_provider'] == true) {
+          print('IM HERE, PROVIDERR!!!!');
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => ProfileScreenProvider()),
+          );
+        } else {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => ServicesPage()),
+          );
+        }
       } else {
         _showErrorDialog('User data not found in Firestore.');
       }
